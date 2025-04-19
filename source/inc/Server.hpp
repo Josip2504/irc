@@ -1,6 +1,6 @@
 #pragma once
 
-#include <map>
+#include "./Utility.hpp"
 
 class Client;
 
@@ -17,8 +17,11 @@ class Server
 	
 	public: //UTILITY
 		std::map<int, Client> get_clients( void ) const;
-	
+		int	get_listen_fd( void ) const;
+		
 	private:
+		int port;
+		std::string passwd;
 		int listen_fd;
 		std::map<int, Client> clients;
 };

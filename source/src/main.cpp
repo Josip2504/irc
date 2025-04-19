@@ -1,16 +1,13 @@
-#include <iostream>
-#include <cstring>
-#include <cstdlib>
-#include <exception>
+#include "../inc/Utility.hpp"
+#include "../inc/Server.hpp"
 
 /*
 *	GOAL is to write just the application for the server
 *	pakets will be send per other programs of our own choice
 *	the Program should behave like a nice program without unexpected quitting
 *	different commands for different stuff . . .
-*	
+*	! WE SPECIFY FOR IPv4 adresses !
 */
-
 using namespace std;
 
 int check_input(int ac, char **av)
@@ -49,11 +46,15 @@ int main(int ac, char **av)
 	if (check_input(ac, av))
 		return EXIT_FAILURE;
 
-	// set sigs
-		//RETURN
-
-	// RUN MAIN LOOP HERE
-	
+	try
+	{
+		Server serv(atoi(av[1]), string(av[2]));
+		serv.run();	
+	}
+	catch(const std::exception& exc)
+	{
+		cerr << "Error: " << exc.what() << endl;
+	}
 
 	return EXIT_SUCCESS;
 }
