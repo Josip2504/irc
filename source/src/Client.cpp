@@ -1,10 +1,10 @@
 #include "../inc/Client.hpp"
 
 Client::Client(int fd, int port, std::string ip) :
-	_fd(fd), _port(port), _ip(ip), _username(""), _hostname(""),
-	_realname(""), _nickname(""), _authenticated(false), _state(0), _lounge(nullptr)
+	_fd(fd), _port(port), _ip(ip), _authenticated(false), _state(0), _lounge(nullptr),
+	_username(""), _hostname(""), _realname(""), _nickname("")
 {
-
+	std::cout << "Client created" << std::endl;
 
 }
 

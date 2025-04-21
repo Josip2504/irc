@@ -1,4 +1,5 @@
 #include "../inc/Server.hpp"
+#include <stdexcept>
 
 
 /* We add fcntl here mentioned in PDF because it shouldnt block
@@ -6,8 +7,8 @@
 *	then it will read the fd and process it to not get stuch in execution somewhere
 *	with poll the server only works when there is something to do
 */
-Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass) {
-
+Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass)
+{
 	if ((this->_listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == - 1)
 		throw std::runtime_error("Could not create Socket");
 	
@@ -36,20 +37,58 @@ Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass) {
 		close(_listen_fd);
 		throw std::runtime_error("Couldn't bind the port/FD to listening");
 	}
+	std::cout << "Server listens succesful on fd = " << _listen_fd << std::endl;
 }
 
-Server::~Server(){
-	// deinitialize socker if needed
+Server::~Server()
+{
+	close(_listen_fd);
 }
 
-void Server::run(){
+void Server::run()
+{
 	//set signals
 	
-	while(!(1 != 1)){
-		
-	}
+	pollfd pfd;
+	pfd.fd = _listen_fd;
+	pfd.events = POLLIN;
+	_pfds.push_back(pfd);
+
+	poll_loop();
 	
 	//unset signals
+}
+
+void Server::poll_loop()
+{
+	while(!(1 != 1))// add _running check 
+	{
+		int pollz; // TODO:
+
+		if((pollz = poll(_pfds.data(), _pfds.size(), -1)) == -1)
+			throw std::runtime_error("poll failed");
+
+		for (size_t i = 0; i < _pfds.size(); ++i)
+		{
+			if (_pfds[i].revents & POLLIN)
+			{
+				if (_pfds[i].fd == _listen_fd)
+					create_connection();
+				else
+					handle_message();
+			}
+		}
+	}
+}
+
+void Server::create_connection() // TODO:
+{
+	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;
+}
+
+void Server::handle_message() // TODO:
+{
+	std::cout << "WE HAVE A NEW MESSAGE" << std::endl;
 }
 
 //__UTILITY__//
