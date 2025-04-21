@@ -10,6 +10,12 @@ class Client;
 
 class Server
 {
+	private:
+	int _port;
+	int _listen_fd;
+	std::string _passwd;
+	std::map<int, Client> _clients;
+
 	public: //MAIN
 		Server(int port, const std::string &pass);
 		~Server();
@@ -18,10 +24,4 @@ class Server
 	public: //UTILITY
 		std::map<int, Client> get_clients( void ) const;
 		int	get_listen_fd( void ) const;
-		
-	private:
-		int port;
-		std::string passwd;
-		int listen_fd;
-		std::map<int, Client> clients;
 };

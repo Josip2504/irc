@@ -1,4 +1,5 @@
 #include "../inc/Utility.hpp"
+#include "../inc/Client.hpp"
 #include "../inc/Server.hpp"
 
 /*
@@ -8,34 +9,33 @@
 *	different commands for different stuff . . .
 *	! WE SPECIFY FOR IPv4 adresses !
 */
-using namespace std;
 
 int check_input(int ac, char **av)
 {
 	try
 	{
 		if (ac != 3)
-			throw runtime_error("The program expects 2 arguments");
+			throw std::runtime_error("The program expects 2 arguments");
 		
-		string str_port, pass;
+		std::string str_port, pass;
 
 		str_port = av[1];
 		pass = av[2];
 	
 		for (char c : str_port ){
 			if (!isdigit(c))
-				throw runtime_error("Only digits allowed in <PORT> specification");
+				throw std::runtime_error("Only digits allowed in <PORT> specification");
 		}
 
 		int port = stoi(str_port);
 			if (port < 0 || port > 65535)
-				throw runtime_error("The given port is out of range | 0 - 65535");
+				throw std::runtime_error("The given port is out of range | 0 - 65535");
 	}
-	catch ( const exception &exc )
+	catch ( const std::exception &exc )
 	{
-		cout << "Please use the program accordingly" << endl;
-		cout << "ircserv <PORT> <PASSWORD>" << endl;
-		cerr << "Error: " << exc.what() << endl;
+		std::cout << "Please use the program accordingly" << std::endl;
+		std::cout << "ircserv <PORT> <PASSWORD>" << std::endl;
+		std::cerr << "Error: " << exc.what() << std::endl;
 		return EXIT_FAILURE;
 	}
 	return EXIT_SUCCESS;
@@ -48,12 +48,12 @@ int main(int ac, char **av)
 
 	try
 	{
-		Server serv(atoi(av[1]), string(av[2]));
+		Server serv(atoi(av[1]), std::string(av[2]));
 		serv.run();	
 	}
 	catch(const std::exception& exc)
 	{
-		cerr << "Error: " << exc.what() << endl;
+		std::cerr << "Error: " << exc.what() << std::endl;
 	}
 
 	return EXIT_SUCCESS;
