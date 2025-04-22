@@ -1,4 +1,5 @@
 #include "../inc/Server.hpp"
+#include <fcntl.h>
 #include <stdexcept>
 
 
@@ -75,7 +76,7 @@ void Server::poll_loop()
 				if (_pfds[i].fd == _listen_fd)
 					create_connection();
 				else
-					handle_message();
+					handle_message(_pfds[i].fd);
 			}
 		}
 	}
@@ -84,11 +85,48 @@ void Server::poll_loop()
 void Server::create_connection() // TODO:
 {
 	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;
+	sockaddr_in new_client;
+	socklen_t client_len = sizeof(new_client);
+	
+	int new_fd = accept(_listen_fd, (sockaddr *)&new_client, &client_len);
+	if (new_fd == -1){//maybe add throw return to keep server running
+		std::cerr << "failed to get client new_fd" << std::endl;
+		return ;
+	}
+
+	fcntl(new_fd, F_SETFL, O_NONBLOCK);
+
+	std::string new_ip = inet_ntoa(new_client.sin_addr);
+	int new_port = ntohs(new_client.sin_port);
+
+	_clients.emplace(new_fd, Client(new_fd, new_port, new_ip));
+	std::cout << _clients.at(new_fd) << std::endl;
+
+	pollfd new_pfd;
+	new_pfd.fd = new_fd;
+	new_pfd.events = POLLIN;
+	_pfds.push_back(new_pfd);
 }
 
-void Server::handle_message() // TODO:
+void Server::handle_message(int fd) // TODO:
 {
 	std::cout << "WE HAVE A NEW MESSAGE" << std::endl;
+	
+	char buffer[512];
+	int bytes_read = recv(fd, buffer, 511, 0);
+
+	
+
+	if (bytes_read <= 0){
+		std::cout << "there was a problem to receive msg from fd = " << fd <<  std::endl;
+		close(fd);
+		//need to delete client
+		return ;
+	}
+
+	// Parsing part here, Tokenizing, Function forwarding, Responding . . .
+
+	std::cout << _clients.at(fd).get_username() << " > [" << buffer << "]" << std::endl;
 }
 
 //__UTILITY__//

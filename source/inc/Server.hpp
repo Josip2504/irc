@@ -14,13 +14,13 @@ class Server
 		int _port;
 		int _listen_fd;
 		std::string _passwd;
-		std::map<int, Client> _clients;
 		bool _run;
+		std::map<int, Client> _clients;
 		std::vector<pollfd> _pfds;
 
 		void poll_loop();
 		void create_connection();
-		void handle_message();
+		void handle_message(int fd);
 
 		public: //MAIN
 		Server(int port, const std::string &pass);

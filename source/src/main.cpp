@@ -31,6 +31,7 @@ int check_input(int ac, char **av)
 			if (port < 0 || port > 65535)
 				throw std::runtime_error("The given port is out of range | 0 - 65535");
 	}
+	
 	catch ( const std::exception &exc )
 	{
 		std::cout << "Please use the program accordingly" << std::endl;
