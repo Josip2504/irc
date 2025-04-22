@@ -114,8 +114,7 @@ void Server::handle_message(int fd) // TODO:
 	
 	char buffer[512];
 	int bytes_read = recv(fd, buffer, 511, 0);
-
-	
+	buffer[bytes_read -1] = '\0'; // we cut out the /n char
 
 	if (bytes_read <= 0){
 		std::cout << "there was a problem to receive msg from fd = " << fd <<  std::endl;
