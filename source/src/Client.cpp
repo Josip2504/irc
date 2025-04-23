@@ -1,4 +1,6 @@
 #include "../inc/Client.hpp"
+#include <sys/socket.h>
+#include <sys/types.h>
 
 Client::Client(int fd, int port, std::string ip) :
 	_fd(fd), _port(port), _ip(ip), _authenticated(false), _state(0), _lounge(nullptr),
@@ -9,7 +11,17 @@ Client::Client(int fd, int port, std::string ip) :
 
 Client::~Client()
 {
-	
+	if(_fd != 0)
+		close(_fd);
+	std::cout << "Removed Client" << std::endl;
+}
+
+void Client::send(const std::string &msg)
+{
+	int64_t bytes_send = ::send(_fd, msg.c_str(), msg.length(), 0);
+	if (bytes_send == -1){
+		std::cerr << "send failed !" << std::endl;
+	}
 }
 
 std::ostream &operator<<(std::ostream &os, const Client &client)

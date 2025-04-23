@@ -21,7 +21,8 @@ class Server
 	private: //MEMBERS
 		void poll_loop();
 		void create_connection();
-		void handle_message(int fd);
+		void handle_message(Client &cli, std::string name);
+		void get_or_make_lounge(std::string &name);
 
 		//void tokenize(); calls the according operation if match
 		// operations

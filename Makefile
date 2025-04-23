@@ -1,7 +1,7 @@
 # REQUIREMENTS #
 NAME = ircserv
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -std=c++11
+CXXFLAGS = -std=c++17 -Wall -Wextra -Werror
 
 # DIRECTORYZ #
 SRC_DIR = source/src

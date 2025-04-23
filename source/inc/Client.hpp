@@ -3,6 +3,8 @@
 #include "./Utility.hpp"
 #include "./Lounge.hpp"
 
+class Lounge;
+
 class Client
 {
 	private:
@@ -21,12 +23,14 @@ class Client
 
 		std::string _input_buffer;
 
-	public:
+	public://MAIN
 		Client(int fd, int port, std::string ip);
 		~Client();
 	
-	
-	public:
+	public: //MEMBER
+		void send(const std::string &msg);
+
+	public: //UTILITY
 		int get_fd() const ;
 		int get_port() const ;
 		std::string get_ip()const ;
@@ -41,7 +45,6 @@ class Client
 		std::string get_nickname() const ;
 
 		std::string get_input_buffer() const ;
-
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &client);

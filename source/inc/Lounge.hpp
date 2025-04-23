@@ -3,6 +3,8 @@
 #include "./Utility.hpp"
 #include "./Client.hpp"
 
+class Client;
+
 class Lounge
 {
 	private:

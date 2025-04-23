@@ -3,10 +3,12 @@
 //_MAIN_
 Lounge::Lounge(std::string &name) : _name(name)
 {
+	std::cout << "new Lounge " << _name << " was Created." << std::endl;
 }
 
 Lounge::~Lounge()
 {
+	std::cout << "Lounge " << _name << " got Removed." << std::endl;
 }
 
 //_MEMBER_
@@ -21,7 +23,7 @@ bool	Lounge::add_client(Client* client, const std::string& key)
 	if (!_key.empty() && _key != key)
 		return false;
 
-	//set client lounge to this->*
+	//set client lounge to this->* if needed
 	_clients.insert(client);
 	if (_operator.empty())
 		_operator.insert(client);
@@ -42,7 +44,7 @@ void	Lounge::broadcast(const std::string& msg, Client* exclude)
 {
 	for (Client *cl : _clients)
 		if (cl != exclude)	
-			//cl->send(msg);
+			cl->send(msg);
 }
 
 void	Lounge::add_operator(Client* client){

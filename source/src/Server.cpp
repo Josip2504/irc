@@ -75,12 +75,27 @@ void Server::poll_loop()
 
 		for (size_t i = 0; i < _pfds.size(); ++i)
 		{
-			if (_pfds[i].revents & POLLIN)
+			auto &pfd = _pfds[i];
+
+
+			if (pfd.revents & POLLIN)
 			{
-				if (_pfds[i].fd == _listen_fd)
+				if (pfd.fd == _listen_fd)
 					create_connection();
 				else
-					handle_message(_pfds[i].fd);
+				{
+					Client &cli = _clients.at(pfd.fd);
+					cli.on_read();
+					if (cli.is_disconnected()){
+						remove_client(pfd.fd);//check if lounge also needs deletion
+						break;
+					}
+
+					while(cli.has_message()){
+						std::string line = cli.next_message();
+						handle_message(cli, line);
+					}
+				}
 			}
 		}
 	}
@@ -102,16 +117,23 @@ void Server::create_connection()
 	std::string new_ip = inet_ntoa(new_client.sin_addr);
 	int new_port = ntohs(new_client.sin_port);
 
-	_clients.emplace(new_fd, Client(new_fd, new_port, new_ip));
+	_clients.try_emplace(new_fd, new_fd, new_port, new_ip);
 	std::cout << _clients.at(new_fd) << std::endl;
 
 	pollfd new_pfd;
 	new_pfd.fd = new_fd;
 	new_pfd.events = POLLIN;
 	_pfds.push_back(new_pfd);
+	
+	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;//LOG::
 }
 
-void Server::handle_message(int fd)
+void handle_message(Client &cli, std::string &line)
+{
+
+}
+
+/*void Server::handle_message(int fd) OLD Structure
 {	
 	char buffer[512];
 	int bytes_read = recv(fd, buffer, 511, 0);
@@ -128,13 +150,24 @@ void Server::handle_message(int fd)
 	// Put all onto Server Class
 
 	//TESTING FOR LOUNGE
-	//. . .
 	Client &client = _clients.at(fd);
+	Lounge new_lounge();
 	//broadcast();
 
+	std::cout << _clients.at(fd).get_username() << " -log > [" << buffer << "]" << std::endl;
+}*/
 
-	std::cout << _clients.at(fd).get_username() << " > [" << buffer << "]" << std::endl;
+void Server::get_or_make_lounge(std::string &name){
+	auto it = _lounges.find(name);
+	if (it != _lounges.end()){
+		std::cout << "lounge already created" << std::endl;
+		return ;
+	}
+
+	_lounges.try_emplace(name, name);
+	std::cout << "lounge " << name << " created" << std::endl;
 }
+
 
 //_UTILITY_
 std::map<int, Client> Server::get_clients( void ) const{
