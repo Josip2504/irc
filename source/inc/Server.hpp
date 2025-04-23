@@ -2,11 +2,10 @@
 
 #include "./Utility.hpp"
 #include "./Client.hpp"
+#include "./Lounge.hpp"
+#include <string>
 
 class Client;
-
-//NEED TO CREATE :
-//	LOUNGE
 
 class Server
 {
@@ -17,12 +16,17 @@ class Server
 		bool _run;
 		std::map<int, Client> _clients;
 		std::vector<pollfd> _pfds;
+		std::map<std::string, Lounge> _lounges;
 
+	private: //MEMBERS
 		void poll_loop();
 		void create_connection();
 		void handle_message(int fd);
 
-		public: //MAIN
+		//void tokenize(); calls the according operation if match
+		// operations
+
+	public: //MAIN
 		Server(int port, const std::string &pass);
 		~Server();
 		void run();
@@ -30,4 +34,6 @@ class Server
 	public: //UTILITY
 		std::map<int, Client> get_clients( void ) const;
 		int	get_listen_fd( void ) const;
+		std::map<std::string, Lounge> get_lounges() const;
+
 };

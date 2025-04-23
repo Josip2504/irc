@@ -5,12 +5,11 @@ Client::Client(int fd, int port, std::string ip) :
 	_username(""), _hostname(""), _realname(""), _nickname("")
 {
 	std::cout << "Client created" << std::endl;
-
 }
 
 Client::~Client()
 {
-
+	
 }
 
 std::ostream &operator<<(std::ostream &os, const Client &client)

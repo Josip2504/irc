@@ -1,8 +1,7 @@
 #pragma once
 
 #include "./Utility.hpp"
-
-class Lounge;
+#include "./Lounge.hpp"
 
 class Client
 {

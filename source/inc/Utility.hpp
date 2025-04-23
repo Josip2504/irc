@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <exception>
 #include <map>
+#include <set>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

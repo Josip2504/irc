@@ -2,12 +2,15 @@
 #include <fcntl.h>
 #include <stdexcept>
 
+//TODO: add authentication status and states in header
 
 /* We add fcntl here mentioned in PDF because it shouldnt block
 *  The Server will check with poll if any FD is ready to be read 
 *	then it will read the fd and process it to not get stuch in execution somewhere
 *	with poll the server only works when there is something to do
 */
+
+//_MAIN_
 Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass)
 {
 	if ((this->_listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == - 1)
@@ -60,6 +63,7 @@ void Server::run()
 	//unset signals
 }
 
+//_MEMBER_
 void Server::poll_loop()
 {
 	while(!(1 != 1))// add _running check 
@@ -82,9 +86,8 @@ void Server::poll_loop()
 	}
 }
 
-void Server::create_connection() // TODO:
+void Server::create_connection()
 {
-	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;
 	sockaddr_in new_client;
 	socklen_t client_len = sizeof(new_client);
 	
@@ -108,10 +111,8 @@ void Server::create_connection() // TODO:
 	_pfds.push_back(new_pfd);
 }
 
-void Server::handle_message(int fd) // TODO:
-{
-	std::cout << "WE HAVE A NEW MESSAGE" << std::endl;
-	
+void Server::handle_message(int fd)
+{	
 	char buffer[512];
 	int bytes_read = recv(fd, buffer, 511, 0);
 	buffer[bytes_read -1] = '\0'; // we cut out the /n char
@@ -124,15 +125,26 @@ void Server::handle_message(int fd) // TODO:
 	}
 
 	// Parsing part here, Tokenizing, Function forwarding, Responding . . .
+	// Put all onto Server Class
+
+	//TESTING FOR LOUNGE
+	//. . .
+	Client &client = _clients.at(fd);
+	//broadcast();
+
 
 	std::cout << _clients.at(fd).get_username() << " > [" << buffer << "]" << std::endl;
 }
 
-//__UTILITY__//
+//_UTILITY_
 std::map<int, Client> Server::get_clients( void ) const{
 	return this->_clients;
 }
 
 int	Server::get_listen_fd( void ) const{
 	return this->_listen_fd;
+}
+
+std::map<std::string, Lounge> Server::get_lounges() const{
+	return this->_lounges;
 }

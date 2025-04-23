@@ -1,6 +1,7 @@
 #include "../inc/Utility.hpp"
 #include "../inc/Client.hpp"
 #include "../inc/Server.hpp"
+#include "../inc/Lounge.hpp"
 
 /*
 *	GOAL is to write just the application for the server
