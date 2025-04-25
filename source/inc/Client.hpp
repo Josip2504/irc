@@ -5,6 +5,13 @@
 
 class Lounge;
 
+enum class ClientState {
+	Connected,
+	Authenticated,
+	Registered,
+	Disconnected
+};
+
 class Client
 {
 	private:
@@ -13,7 +20,7 @@ class Client
 		std::string _ip;
 
 		bool _authenticated;
-		int _state;
+		ClientState _state;
 		Lounge *_lounge;
 
 		std::string _username;
@@ -22,6 +29,7 @@ class Client
 		std::string _nickname;
 
 		std::string _input_buffer;
+		std::queue<std::string>_message_list;
 
 	public://MAIN
 		Client(int fd, int port, std::string ip);
@@ -29,6 +37,13 @@ class Client
 	
 	public: //MEMBER
 		void send(const std::string &msg);
+		
+		void on_read();
+		bool is_disconnected();
+
+		bool has_message();
+		std::string next_message();
+
 
 	public: //UTILITY
 		int get_fd() const ;
@@ -36,7 +51,7 @@ class Client
 		std::string get_ip()const ;
 
 		bool get_authenticated() const ;
-		int get_state() const ;
+		ClientState get_state() const ;
 		Lounge *get_lounge() const ;
 
 		std::string get_username() const ;
@@ -45,6 +60,8 @@ class Client
 		std::string get_nickname() const ;
 
 		std::string get_input_buffer() const ;
+		std::queue<std::string> get_message_list() const;
+
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &client);

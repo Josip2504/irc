@@ -12,6 +12,7 @@
 #include <exception>
 #include <map>
 #include <set>
+#include <queue>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>

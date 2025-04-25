@@ -21,8 +21,9 @@ class Server
 	private: //MEMBERS
 		void poll_loop();
 		void create_connection();
-		void handle_message(Client &cli, std::string name);
+		void handle_message(Client &cli, std::string &line);
 		void get_or_make_lounge(std::string &name);
+		void remove_client(int fd);
 
 		//void tokenize(); calls the according operation if match
 		// operations
@@ -36,5 +37,4 @@ class Server
 		std::map<int, Client> get_clients( void ) const;
 		int	get_listen_fd( void ) const;
 		std::map<std::string, Lounge> get_lounges() const;
-
 };

@@ -15,7 +15,7 @@ int check_input(int ac, char **av)
 {
 	try
 	{
-		if (ac != 3)
+		if (ac < 3 || ac > 4)
 			throw std::runtime_error("The program expects 2 arguments");
 		
 		std::string str_port, pass;

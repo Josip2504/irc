@@ -56,7 +56,7 @@ void Server::run()
 	pollfd pfd;
 	pfd.fd = _listen_fd;
 	pfd.events = POLLIN;
-	_pfds.push_back(pfd);
+	_pfds.push_back(pfd); //maybe add main pfd checks
 
 	poll_loop();
 	
@@ -87,7 +87,7 @@ void Server::poll_loop()
 					Client &cli = _clients.at(pfd.fd);
 					cli.on_read();
 					if (cli.is_disconnected()){
-						remove_client(pfd.fd);//check if lounge also needs deletion
+						remove_client(pfd.fd);
 						break;
 					}
 
@@ -128,9 +128,11 @@ void Server::create_connection()
 	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;//LOG::
 }
 
-void handle_message(Client &cli, std::string &line)
+void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 {
-
+	(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
+	(void)line;
+	std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
 }
 
 /*void Server::handle_message(int fd) OLD Structure
@@ -168,6 +170,27 @@ void Server::get_or_make_lounge(std::string &name){
 	std::cout << "lounge " << name << " created" << std::endl;
 }
 
+void Server::remove_client(int fd)
+{
+	auto it = _clients.find(fd);
+	if (it == _clients.end())
+		return ;
+
+	if (it->second.get_lounge() != nullptr)
+		it->second.get_lounge()->remove_client(&it->second);
+	
+	_clients.erase(it);
+
+	close(fd);
+	for (auto it = _pfds.begin(); it != _pfds.end(); ++it) {
+		if (it->fd == fd) {
+			_pfds.erase(it);
+			break;
+		}
+	}
+	
+	std::cout << "Client " << fd << " disconnected.";
+}
 
 //_UTILITY_
 std::map<int, Client> Server::get_clients( void ) const{

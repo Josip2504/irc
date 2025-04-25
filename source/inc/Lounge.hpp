@@ -20,7 +20,7 @@ class Lounge
 		bool	_topic_restriction = false;
 		int		_limit = 0;
 
-	private: //MEMBERS
+	public: //MEMBERS
 		bool	add_client(Client* client, const std::string& key);
 		void	remove_client(Client* client);
 		bool	is_member(Client* client) const;

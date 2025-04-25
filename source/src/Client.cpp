@@ -3,7 +3,7 @@
 #include <sys/types.h>
 
 Client::Client(int fd, int port, std::string ip) :
-	_fd(fd), _port(port), _ip(ip), _authenticated(false), _state(0), _lounge(nullptr),
+	_fd(fd), _port(port), _ip(ip), _authenticated(false), _state(ClientState::Connected), _lounge(nullptr),
 	_username(""), _hostname(""), _realname(""), _nickname("")
 {
 	std::cout << "Client created" << std::endl;
@@ -23,6 +23,49 @@ void Client::send(const std::string &msg)
 		std::cerr << "send failed !" << std::endl;
 	}
 }
+
+void Client::on_read(){
+	char buffer[1024];
+	int bytes_read = recv(_fd, buffer, sizeof(buffer), 0);
+	if (bytes_read <= 0){
+		_state = (ClientState::Disconnected);
+		return ;
+	}
+	buffer[bytes_read] = '\0';
+
+	std::string tempz(buffer, bytes_read);
+	_input_buffer += tempz;
+
+	size_t pos;
+	while((pos = _input_buffer.find("\r\n")) != std::string::npos){
+		std::string line = _input_buffer.substr(0, pos);
+		_input_buffer.erase(0, pos + 2);
+		_message_list.push(line);
+	}
+}
+
+bool Client::is_disconnected()
+{
+	if (_state == ClientState::Disconnected)
+		return true;
+	return false;
+}
+
+bool Client::has_message()
+{
+	if (!_message_list.empty())
+		return true;
+	return false;
+}
+
+std::string Client::next_message()
+{
+	std::string next_line = _message_list.front();
+	_message_list.pop();
+
+	return next_line;
+}
+
 
 std::ostream &operator<<(std::ostream &os, const Client &client)
 {
@@ -52,7 +95,7 @@ std::ostream &operator<<(std::ostream &os, const Client &client)
 			return _authenticated;
 		}
 
-		int Client::get_state() const {
+		ClientState Client::get_state() const {
 			return _state;
 		}
 
@@ -80,5 +123,9 @@ std::ostream &operator<<(std::ostream &os, const Client &client)
 			return _input_buffer;
 		}
 
+		std::queue<std::string> Client::get_message_list() const{
+			return this->_message_list;
+		}
+		
 //_SET
 		//. . .
