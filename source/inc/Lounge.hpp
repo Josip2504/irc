@@ -1,7 +1,6 @@
 #pragma once
 
 #include "./Utility.hpp"
-#include "./Client.hpp"
 
 class Client;
 
@@ -55,3 +54,5 @@ class Lounge
 		void	set_key(const std::string& key);
 		const std::string& get_key() const;
 	};
+
+#include "./Client.hpp"

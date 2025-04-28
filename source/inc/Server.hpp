@@ -13,7 +13,6 @@ class Server
 		int _port;
 		int _listen_fd;
 		std::string _passwd;
-		bool _run;
 		std::map<int, Client> _clients;
 		std::vector<pollfd> _pfds;
 		std::map<std::string, Lounge> _lounges;

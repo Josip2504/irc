@@ -13,6 +13,7 @@
 //_MAIN_
 Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass)
 {
+	(void)_port;
 	if ((this->_listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == - 1)
 		throw std::runtime_error("Could not create Socket");
 	

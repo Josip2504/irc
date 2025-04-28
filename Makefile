@@ -8,12 +8,6 @@ SRC_DIR = source/src
 INC_DIR = source/inc
 OBJ_DIR = obj
 
-# ADDITIONAL DIRECTORYZ # wille be added soon .
-#  CMDS
-#  PARSING
-#  SOCKET INIT
-#  . . .
-
 # FILEZ #
 SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC_FILES))

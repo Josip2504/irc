@@ -37,7 +37,8 @@ void Client::on_read(){
 	_input_buffer += tempz;
 
 	size_t pos;
-	while((pos = _input_buffer.find("\r\n")) != std::string::npos){
+	while((pos = _input_buffer.find("\n")) != std::string::npos) // recreate that it takes \r\n
+	{
 		std::string line = _input_buffer.substr(0, pos);
 		_input_buffer.erase(0, pos + 2);
 		_message_list.push(line);
