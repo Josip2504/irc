@@ -1,4 +1,4 @@
-#include "../inc/IrcClient.hpp"
+#include "IrcClient.hpp"
 #include <iostream>
 #include <unistd.h>
 #include <fcntl.h>
@@ -47,6 +47,7 @@ void IrcClient::disconnect() {
 void IrcClient::sendCommand(const std::string &command) {
 	if (!isConnected())
 		return ;
+	std::string msg = command + "\r\n";
 	send(_socket_fd, command.c_str(), command.size(), 0);
 }
 
