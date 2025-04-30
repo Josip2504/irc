@@ -1,1 +1,3 @@
-test
+seperate client sending commands correctly
+
+	nc is not sending good!!!
