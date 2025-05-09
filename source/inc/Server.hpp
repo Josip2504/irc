@@ -37,7 +37,7 @@ class Server
 		int	get_listen_fd( void ) const;
 		std::map<std::string, Lounge> get_lounges() const;
 
-	public: //jsamardz
+	public: //jsamardz - this commands can be found in Commands.cpp
 		void handle_pass(Client &cli, std::istringstream &iss);
 		void handle_nick(Client &cli, std::istringstream &iss);
 		void handle_user(Client &cli, std::istringstream &iss);
