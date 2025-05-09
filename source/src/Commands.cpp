@@ -75,21 +75,35 @@ void Server::handle_join(Client &cli, std::istringstream &iss) {
 		return;
 	}
 
-	std::string channel_name;
+	std::string channel_name, key;
 	iss >> channel_name;
+	iss >> key;
 
 	if (channel_name.empty() || channel_name[0] != '#') {
 		cli.send("ERROR :Invalid channel name (use #name)\r\n");
 		return;
 	}
 
-	// Remove '#' prefix
 	std::string lounge_name = channel_name.substr(1);
-	// Create channel if it doesn't exist
+
 	auto [it, created] = _lounges.try_emplace(lounge_name, lounge_name);
 	Lounge &lounge = it->second;
 
-	if (lounge.add_client(&cli, "")) { // No password for now
+	if (lounge.is_invite_only() && !lounge.is_invited(&cli)) {
+		cli.send(":server 473 " + cli.get_nickname() + " " + channel_name + " :Cannot join (+i)\r\n");
+		return;
+	}
+	else if (!lounge.get_key().empty() && lounge.get_key() != key) {
+		cli.send(":server 475 " + cli.get_nickname() + " " + channel_name + " :Bad channel key\r\n");
+		return;
+	}
+	else if (lounge.get_limit() > 0 && lounge.get_client_count() >= static_cast<size_t>(lounge.get_limit())) {
+		cli.send(":server 471 " + cli.get_nickname() + " " + channel_name + " :Channel is full (+l)\r\n");
+		return;
+	}
+
+	// join logic
+	if (lounge.add_client(&cli, key)) {
 		cli.set_lounge(&lounge);
 		
 		lounge.broadcast(":" + cli.get_nickname() + " JOIN " + channel_name + "\r\n", nullptr);
@@ -97,6 +111,16 @@ void Server::handle_join(Client &cli, std::istringstream &iss) {
 		if (!lounge.get_topic().empty()) {
 			cli.send(":" + cli.get_nickname() + " TOPIC " + channel_name + " :" + lounge.get_topic() + "\r\n");
 		}
+
+		std::string names_list;
+		for (Client *member : lounge.get_clients()) {
+			if (lounge.is_operator(member)) {
+				names_list += "@";
+			}
+			names_list += member->get_nickname() + " ";
+		}
+		cli.send(":server 353 " + cli.get_nickname() + " = " + channel_name + " :" + names_list + "\r\n");
+		cli.send(":server 366 " + cli.get_nickname() + " " + channel_name + " :End of /NAMES list\r\n");
 	} else {
 		cli.send("ERROR :Cannot join channel\r\n");
 	}
@@ -353,6 +377,31 @@ void Server::handle_mode(Client &cli, std::istringstream &iss) {
 			}
 		}
 		cli.send("ERROR :User not found\r\n");
+	}
+	else if (mode == "+k") {
+		if (arg.empty()) {
+			cli.send("ERROR :Key required (+k <password>)\r\n");
+		} else {
+			lounge.set_key(arg);
+			lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " +k " + arg + "\r\n", nullptr);
+		}
+	}
+	else if (mode == "-k") {
+		lounge.set_key("");
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " -k\r\n", nullptr);
+	}
+	else if (mode == "+l") {
+		try {
+			int limit = std::stoi(arg);
+			lounge.set_limit(limit);
+			lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " +l " + arg + "\r\n", nullptr);
+		} catch (...) {
+			cli.send("ERROR :Invalid limit value\r\n");
+		}
+	}
+	else if (mode == "-l") {
+		lounge.set_limit(0);
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " -l\r\n", nullptr);
 	}
 	else {
 		cli.send("ERROR :Unknown mode\r\n");

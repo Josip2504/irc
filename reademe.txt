@@ -35,7 +35,7 @@ Phase 3: Channel Management ✅
 		TOPIC: View/change channel topic
 		MODE: Configure channel settings
 
-Phase 4: Advanced Features
+Phase 4: Advanced Features ✅
 	Channel Modes
 		Implement mode flags:
 			- i: Invite-only
@@ -49,3 +49,6 @@ Phase 4: Advanced Features
 		Partial command handling
 		Connection robustness
 
+Phase 5:
+	Testing
+	Error handling
