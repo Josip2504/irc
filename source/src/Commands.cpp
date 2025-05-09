@@ -186,3 +186,175 @@ void Server::handle_names(Client &cli, std::istringstream &iss) {
 		cli.send("ERROR :Channel doesn't exist\r\n");
 	}
 }
+
+void Server::handle_kick(Client &cli, std::istringstream &iss) {
+	std::string channel, target, reason;
+	iss >> channel >> target;
+	std::getline(iss, reason); // Optional reason
+
+	if (channel.empty() || channel[0] != '#') {
+		cli.send("ERROR :Invalid channel\r\n");
+		return;
+	}
+
+	std::string lounge_name = channel.substr(1);
+	auto lounge_it = _lounges.find(lounge_name);
+
+	if (lounge_it == _lounges.end()) {
+		cli.send("ERROR :Channel doesn't exist\r\n");
+		return;
+	}
+
+	Lounge &lounge = lounge_it->second;
+
+	if (!lounge.is_operator(&cli)) {
+		cli.send("ERROR :You're not a channel operator\r\n");
+		return;
+	}
+
+	for (auto &[fd, client] : _clients) {
+		if (client.get_nickname() == target && lounge.is_member(&client)) {
+			lounge.broadcast(":" + cli.get_nickname() + " KICK " + channel + " " + target + reason + "\r\n", nullptr);
+			lounge.remove_client(&client);
+			client.set_lounge(nullptr);
+			return;
+		}
+	}
+
+	cli.send("ERROR :User not in channel\r\n");
+}
+
+void Server::handle_invite(Client &cli, std::istringstream &iss) {
+	std::string target, channel;
+	iss >> target >> channel;
+
+	if (channel.empty() || channel[0] != '#') {
+		cli.send("ERROR :Invalid channel\r\n");
+		return;
+	}
+
+	std::string lounge_name = channel.substr(1);
+	auto lounge_it = _lounges.find(lounge_name);
+
+	if (lounge_it == _lounges.end()) {
+		cli.send("ERROR :Channel doesn't exist\r\n");
+		return;
+	}
+
+	Lounge &lounge = lounge_it->second;
+
+	if (!lounge.is_operator(&cli)) {
+		cli.send("ERROR :You're not a channel operator\r\n");
+		return;
+	}
+
+	for (auto &[fd, client] : _clients) {
+		if (client.get_nickname() == target) {
+			lounge.invite(&client);
+			client.send(":" + cli.get_nickname() + " INVITE " + target + " " + channel + "\r\n");
+			cli.send(":server 341 " + cli.get_nickname() + " " + target + " " + channel + "\r\n");
+			return;
+		}
+	}
+
+	cli.send("ERROR :User not found\r\n");
+}
+
+void Server::handle_topic(Client &cli, std::istringstream &iss) {
+	std::string channel, new_topic;
+	iss >> channel;
+	std::getline(iss, new_topic);
+
+	if (channel.empty() || channel[0] != '#') {
+		cli.send("ERROR :Invalid channel\r\n");
+		return;
+	}
+
+	std::string lounge_name = channel.substr(1);
+	auto lounge_it = _lounges.find(lounge_name);
+
+	if (lounge_it == _lounges.end()) {
+		cli.send("ERROR :Channel doesn't exist\r\n");
+		return;
+	}
+
+	Lounge &lounge = lounge_it->second;
+
+	if (new_topic.empty()) {
+		// GET topic
+		cli.send(":server 332 " + cli.get_nickname() + " " + channel + " :" + lounge.get_topic() + "\r\n");
+	} else {
+		// SET topic
+		if (lounge.is_topic_restricted() && !lounge.is_operator(&cli)) {
+			cli.send("ERROR :You need operator privileges\r\n");
+		} else {
+			lounge.set_topic(new_topic.substr(1), &cli); // Remove leading space
+			lounge.broadcast(":" + cli.get_nickname() + " TOPIC " + channel + " :" + new_topic.substr(1) + "\r\n", nullptr);
+		}
+	}
+}
+
+void Server::handle_mode(Client &cli, std::istringstream &iss) {
+	std::string target, mode, arg;
+	iss >> target >> mode >> arg;
+
+	if (target.empty() || target[0] != '#') {
+		cli.send("ERROR :Invalid target\r\n");
+		return;
+	}
+
+	std::string lounge_name = target.substr(1);
+	auto lounge_it = _lounges.find(lounge_name);
+
+	if (lounge_it == _lounges.end()) {
+		cli.send("ERROR :Channel doesn't exist\r\n");
+		return;
+	}
+
+	Lounge &lounge = lounge_it->second;
+
+	if (!lounge.is_operator(&cli)) {
+		cli.send("ERROR :You're not a channel operator\r\n");
+		return;
+	}
+
+	if (mode == "+i") {
+		lounge.set_invite_only(true);
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " +i\r\n", nullptr);
+	}
+	else if (mode == "-i") {
+		lounge.set_invite_only(false);
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " -i\r\n", nullptr);
+	}
+	else if (mode == "+t") {
+		lounge.set_topic_restriction(true);
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " +t\r\n", nullptr);
+	}
+	else if (mode == "-t") {
+		lounge.set_topic_restriction(false);
+		lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " -t\r\n", nullptr);
+	}
+	else if (mode == "+o") {
+		for (auto &[fd, client] : _clients) {
+			if (client.get_nickname() == arg && lounge.is_member(&client)) {
+				lounge.add_operator(&client);
+				lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " +o " + arg + "\r\n", nullptr);
+				return;
+			}
+		}
+		cli.send("ERROR :User not found\r\n");
+	}
+	else if (mode == "-o") {
+		for (auto &[fd, client] : _clients) {
+			if (client.get_nickname() == arg) {
+				lounge.remove_operator(&client);
+				lounge.broadcast(":" + cli.get_nickname() + " MODE " + target + " -o " + arg + "\r\n", nullptr);
+				return;
+			}
+		}
+		cli.send("ERROR :User not found\r\n");
+	}
+	else {
+		cli.send("ERROR :Unknown mode\r\n");
+	}
+}
