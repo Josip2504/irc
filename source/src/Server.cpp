@@ -1,6 +1,7 @@
 #include "../inc/Server.hpp"
 #include <fcntl.h>
 #include <stdexcept>
+#include <sstream>
 
 //TODO: add authentication status and states in header
 
@@ -129,12 +130,12 @@ void Server::create_connection()
 	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;//LOG::
 }
 
-void Server::handle_message(Client &cli, std::string &line) // PARSING PART
+/*void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 {
-	(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
-	(void)line;
-	std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
-}
+	//(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
+	//(void)line;
+	//std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
+} */
 
 /*void Server::handle_message(int fd) OLD Structure
 {	
@@ -204,4 +205,95 @@ int	Server::get_listen_fd( void ) const{
 
 std::map<std::string, Lounge> Server::get_lounges() const{
 	return this->_lounges;
+}
+
+
+	//jsamardz commands part below
+
+void Server::handle_pass(Client &cli, std::istringstream &iss) {
+	std::string password;
+	iss >> password;
+
+	if (password.empty()) {
+		cli.send("ERROR :Password required\r\n");
+	} 
+	else if (password != _passwd) {
+		cli.send("ERROR :Invalid password\r\n");
+		remove_client(cli.get_fd());
+	} 
+	else {
+		cli.set_state(ClientState::Authenticated);
+		cli.send(":server 001 :Password accepted\r\n");
+	}
+}
+
+void Server::handle_nick(Client &cli, std::istringstream &iss) {
+	std::string nick;
+	iss >> nick;
+
+	if (nick.empty()) {
+		cli.send("ERROR :No nickname given\r\n");
+		return;
+	}
+
+	// Check if nickname is already in use
+	for (auto &[fd, client] : _clients) {
+		if (client.get_nickname() == nick) {
+			cli.send("ERROR :Nickname already in use\r\n");
+			return;
+		}
+	}
+
+	cli.set_nick(nick);
+	cli.send(":server 001 :Nickname set to " + nick + "\r\n");
+
+	// Autoregister if USER was already set
+	if (!cli.get_username().empty() && cli.is_authenticated()) {
+		cli.set_state(ClientState::Registered);
+		cli.send(":server 001 :Registration complete\r\n");
+	}
+}
+
+void Server::handle_user(Client &cli, std::istringstream &iss) {
+	std::string username, hostname, servername, realname;
+	iss >> username >> hostname >> servername;
+	std::getline(iss, realname); // Realname may contain spaces
+
+	if (username.empty() || hostname.empty() || realname.empty()) {
+		cli.send("ERROR :USER syntax: USER <username> <hostname> <servername> :<realname>\r\n");
+		return;
+	}
+
+	cli.set_username(username);
+	cli.set_hostname(hostname);
+	cli.set_realname(realname.substr(1)); // Remove leading ':'
+
+	// Auto-register if NICK was already set
+	if (!cli.get_nickname().empty() && cli.is_authenticated()) {
+		cli.set_state(ClientState::Registered);
+		cli.send(":server 001 :Registration complete. Welcome!\r\n");
+	}
+}
+
+void Server::handle_message(Client &cli, std::string &line) // PARSING PART
+{
+	std::istringstream iss(line);
+	std::string cmd;
+	iss >> cmd;
+
+	if (cmd == "PASS") {
+		handle_pass(cli, iss);
+	} 
+	else if (cmd == "NICK") {
+		handle_nick(cli, iss);
+	} 
+	else if (cmd == "USER") {
+		handle_user(cli, iss);
+	}
+	else {
+		if (!cli.is_registered()) {
+			cli.send("ERROR :Register first (PASS/NICK/USER)\r\n");
+		}
+	// TODO other commands
+	}
 }
