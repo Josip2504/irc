@@ -71,7 +71,7 @@ class Client
 		void set_username(std::string username) { _username = username; }
 		void set_hostname(std::string host) { _hostname = host; }
 		void set_realname(std::string real) { _realname = real; }
-
+		void set_lounge(Lounge *lounge) { _lounge = lounge; }
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &client);

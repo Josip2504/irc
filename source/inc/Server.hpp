@@ -41,4 +41,8 @@ class Server
 		void handle_pass(Client &cli, std::istringstream &iss);
 		void handle_nick(Client &cli, std::istringstream &iss);
 		void handle_user(Client &cli, std::istringstream &iss);
+		void handle_join(Client &cli, std::istringstream &iss);
+		void handle_part(Client &cli, std::istringstream &iss);
+		void handle_privmsg(Client &cli, std::istringstream &iss);
+		void handle_names(Client &cli, std::istringstream &iss);
 };
