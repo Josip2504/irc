@@ -45,4 +45,8 @@ class Server
 		void handle_part(Client &cli, std::istringstream &iss);
 		void handle_privmsg(Client &cli, std::istringstream &iss);
 		void handle_names(Client &cli, std::istringstream &iss);
+		void handle_kick(Client &cli, std::istringstream &iss);
+		void handle_invite(Client &cli, std::istringstream &iss);
+		void handle_topic(Client &cli, std::istringstream &iss);
+		void handle_mode(Client &cli, std::istringstream &iss);
 };

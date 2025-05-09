@@ -242,6 +242,18 @@ void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 	else if (cmd == "NAMES") {
 		handle_names(cli, iss);
 	}
+	else if (cmd == "KICK") {
+		handle_kick(cli, iss);
+	}
+	else if (cmd == "INVITE") {
+		handle_invite(cli, iss);
+	}
+	else if (cmd == "TOPIC") {
+		handle_topic(cli, iss);
+	}
+	else if (cmd == "MODE") {
+		handle_mode(cli, iss);
+	}
 	else {
 		if (!cli.is_registered()) {
 			cli.send("ERROR :Register first (PASS/NICK/USER)\r\n");
