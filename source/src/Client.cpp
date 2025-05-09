@@ -25,29 +25,22 @@ void Client::send(const std::string &msg)
 }
 
 void Client::on_read(){
-	char buffer[1024];								//  | 
-	int bytes_read = recv(_fd, buffer, sizeof(buffer) - 1, 0); // leave space for null tearmiantor by adding "- 1"
+	char buffer[1024];
+	int bytes_read = recv(_fd, buffer, sizeof(buffer), 0);
 	if (bytes_read <= 0){
 		_state = (ClientState::Disconnected);
 		return ;
 	}
 	buffer[bytes_read] = '\0';
 
-	// std::string tempz(buffer, bytes_read); ----------
-	// _input_buffer += tempz;
-
-	_input_buffer += buffer;
+	std::string tempz(buffer, bytes_read);
+	_input_buffer += tempz;
 
 	size_t pos;
-	//while((pos = _input_buffer.find("\n")) != std::string::npos) // recreate that it takes \r\n
-	//{
-	//	std::string line = _input_buffer.substr(0, pos);	----------------
-	//	_input_buffer.erase(0, pos + 2);
-	//	_message_list.push(line);
-	//}
-	while ((pos = _input_buffer.find("\r\n")) != std::string::npos) {
+	while((pos = _input_buffer.find("\n")) != std::string::npos) // recreate that it takes \r\n
+	{
 		std::string line = _input_buffer.substr(0, pos);
-		_input_buffer.erase(0, pos + 2); // Remove \r\n
+		_input_buffer.erase(0, pos + 2);
 		_message_list.push(line);
 	}
 }
