@@ -1,0 +1,50 @@
+Roadmap commands
+
+Phase 1: Core Infrastructure ✅
+	Client Registration System
+		Implement state tracking (Connected → Authenticated → Registered)
+		Create message parsing framework to extract commands and parameters
+		Set up basic error response system
+
+	Authentication Commands
+		PASS: Verify server password
+		NICK: Set client nickname (with validation)
+		USER: Set username/hostname/realname
+		Registration sequence enforcement (PASS→NICK→USER)
+
+Phase 2: Basic Communication
+	Channel System
+		Channel creation/management
+		Client tracking per channel
+		Basic broadcast functionality
+
+	Messaging Commands
+		JOIN: Enter channel
+		PART: Leave channel
+		PRIVMSG: Send messages to channels/users
+		NAMES: List channel members
+
+Phase 3: Channel Management
+	Operator Privileges
+		Distinguish operators vs regular users
+		Channel operator tracking
+
+	Operator Commands
+		KICK: Remove user from channel
+		INVITE: Bypass invite-only
+		TOPIC: View/change channel topic
+		MODE: Configure channel settings
+
+Phase 4: Advanced Features
+	Channel Modes
+		Implement mode flags:
+			- i: Invite-only
+			- t: Topic restriction
+			- k: Password protection
+			- o: Operator privileges
+			- l: User limit
+
+	Error Handling
+		Comprehensive error responses
+		Partial command handling
+		Connection robustness

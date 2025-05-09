@@ -36,4 +36,9 @@ class Server
 		std::map<int, Client> get_clients( void ) const;
 		int	get_listen_fd( void ) const;
 		std::map<std::string, Lounge> get_lounges() const;
+
+	public: //jsamardz
+		void handle_pass(Client &cli, std::istringstream &iss);
+		void handle_nick(Client &cli, std::istringstream &iss);
+		void handle_user(Client &cli, std::istringstream &iss);
 };
