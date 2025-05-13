@@ -1,8 +1,9 @@
 #include "../inc/Server.hpp"
 #include <fcntl.h>
 #include <stdexcept>
+#include <csignal>
 
-//TODO: add authentication status and states in header
+bool Server::_sig = false;
 
 /* We add fcntl here mentioned in PDF because it shouldnt block
 *  The Server will check with poll if any FD is ready to be read 
@@ -11,7 +12,7 @@
 */
 
 //_MAIN_
-Server::Server(int port, const std::string &pass) : _port(port), _passwd(pass)
+Server::Server(int port, const std::string &pass) :  _run(true), _port(port), _passwd(pass)
 {
 	(void)_port;
 	if ((this->_listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == - 1)
@@ -51,28 +52,24 @@ Server::~Server()
 }
 
 void Server::run()
-{
-	//set signals
-	
+{	
 	pollfd pfd;
 	pfd.fd = _listen_fd;
 	pfd.events = POLLIN;
 	_pfds.push_back(pfd); //maybe add main pfd checks
 
 	poll_loop();
-	
-	//unset signals
 }
 
 //_MEMBER_
 void Server::poll_loop()
 {
-	while(!(1 != 1))// add _running check 
+	while(_run == true) 
 	{
-		int pollz; // TODO:
+		int pollz;
 
 		if((pollz = poll(_pfds.data(), _pfds.size(), -1)) == -1)
-			throw std::runtime_error("poll failed");
+			return;
 
 		for (size_t i = 0; i < _pfds.size(); ++i)
 		{
@@ -108,7 +105,7 @@ void Server::create_connection()
 	socklen_t client_len = sizeof(new_client);
 	
 	int new_fd = accept(_listen_fd, (sockaddr *)&new_client, &client_len);
-	if (new_fd == -1){//maybe add throw return to keep server running
+	if (new_fd == -1){
 		std::cerr << "failed to get client new_fd" << std::endl;
 		return ;
 	}
@@ -191,6 +188,44 @@ void Server::remove_client(int fd)
 	}
 	
 	std::cout << "Client " << fd << " disconnected.";
+}
+
+void Server::shutdown()
+{
+	std::cout << "Server is shutting down." << std::endl;
+	
+	std::vector<int> open_fds;
+	open_fds.reserve(_clients.size());
+	for (auto &cl : _clients){
+		open_fds.push_back(cl.first);
+	}
+	for(int fd : open_fds){
+		remove_client(fd);
+	}
+	
+	_lounges.clear();
+	
+	if (_listen_fd != -1){
+		close(_listen_fd);
+		_listen_fd = -1;
+	}
+
+	_pfds.clear();
+	_clients.clear();
+
+	std::cout << "Cleanup done, farewell traveler." << std::endl;
+}
+
+void Server::init_signals()
+{
+	signal(SIGINT, Server::stop_run);
+	signal(SIGQUIT, Server::stop_run);
+}
+
+void Server::stop_run(const int signum)
+{
+	(void)signum;
+	Server::_sig = false;
 }
 
 //_UTILITY_
