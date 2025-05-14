@@ -93,6 +93,10 @@ void Server::poll_loop()
 					while(cli.has_message()){
 						std::string line = cli.next_message();
 						handle_message(cli, line);
+						if (cli.is_disconnected()){
+							remove_client(pfd.fd);
+							break;
+						}
 					}
 				}
 			}

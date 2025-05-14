@@ -13,7 +13,8 @@ void Server::handle_pass(Client &cli, std::istringstream &iss) {
 	} 
 	else if (password != _passwd) {
 		cli.send("ERROR :Invalid password\r\n");
-		remove_client(cli.get_fd());
+		cli.set_state(ClientState::Disconnected);
+		//remove_client(cli.get_fd());
 	} 
 	else {
 		cli.set_state(ClientState::Authenticated);
