@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdlib>
+#include <csignal>
 #include <exception>
 #include <map>
 #include <set>

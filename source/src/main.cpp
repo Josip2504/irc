@@ -1,7 +1,5 @@
 #include "../inc/Utility.hpp"
-#include "../inc/Client.hpp"
 #include "../inc/Server.hpp"
-#include "../inc/Lounge.hpp"
 
 /*
 *	GOAL is to write just the application for the server
@@ -50,7 +48,9 @@ int main(int ac, char **av)
 	try
 	{
 		Server serv(atoi(av[1]), std::string(av[2]));
-		serv.run();	
+		serv.init_signals();
+		serv.run();
+		serv.shutdown();
 	}
 	catch(const std::exception& exc)
 	{
