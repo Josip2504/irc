@@ -1,6 +1,7 @@
 #include "../inc/Server.hpp"
 #include <fcntl.h>
 #include <stdexcept>
+#include <sstream>
 
 //TODO: add authentication status and states in header
 
@@ -129,12 +130,18 @@ void Server::create_connection()
 	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;//LOG::
 }
 
-void Server::handle_message(Client &cli, std::string &line) // PARSING PART
+
+
+			// jsamardz - moved handle_massage down below
+
+
+
+/*void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 {
-	(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
-	(void)line;
-	std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
-}
+	//(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
+	//(void)line;
+	//std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
+} */
 
 /*void Server::handle_message(int fd) OLD Structure
 {	
@@ -204,4 +211,55 @@ int	Server::get_listen_fd( void ) const{
 
 std::map<std::string, Lounge> Server::get_lounges() const{
 	return this->_lounges;
+}
+
+		// jsamardz new handle msg
+
+void Server::handle_message(Client &cli, std::string &line) // PARSING PART
+{
+	std::istringstream iss(line);
+	std::string cmd;
+	iss >> cmd;
+
+	if (cmd == "PASS") {
+		handle_pass(cli, iss);
+	} 
+	else if (cmd == "NICK") {
+		handle_nick(cli, iss);
+	} 
+	else if (cmd == "USER") {
+		handle_user(cli, iss);
+	}
+	else if (cmd == "JOIN") {
+		handle_join(cli, iss);
+	}
+	else if (cmd == "PART") {
+		handle_part(cli, iss);
+	}
+	else if (cmd == "PRIVMSG") {
+		handle_privmsg(cli, iss);
+	}
+	else if (cmd == "NAMES") {
+		handle_names(cli, iss);
+	}
+	else if (cmd == "KICK") {
+		handle_kick(cli, iss);
+	}
+	else if (cmd == "INVITE") {
+		handle_invite(cli, iss);
+	}
+	else if (cmd == "TOPIC") {
+		handle_topic(cli, iss);
+	}
+	else if (cmd == "MODE") {
+		handle_mode(cli, iss);
+	}
+	else {
+		if (!cli.is_registered()) {
+			cli.send("ERROR :Register first (PASS/NICK/USER)\r\n");
+		}
+		else {
+			cli.send("ERROR :Unknown command\r\n");
+		}
+	}
 }

@@ -62,6 +62,16 @@ class Client
 		std::string get_input_buffer() const ;
 		std::queue<std::string> get_message_list() const;
 
+	public: //jsamardz
+		bool is_authenticated() const { return _state >= ClientState::Authenticated; }
+		bool is_registered() const { return _state >= ClientState::Registered; }
+			//setters
+		void set_state(ClientState newState) { _state = newState; }
+		void set_nick(std::string newNick) { _nickname = newNick; }
+		void set_username(std::string username) { _username = username; }
+		void set_hostname(std::string host) { _hostname = host; }
+		void set_realname(std::string real) { _realname = real; }
+		void set_lounge(Lounge *lounge) { _lounge = lounge; }
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &client);

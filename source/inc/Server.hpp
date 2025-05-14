@@ -36,4 +36,17 @@ class Server
 		std::map<int, Client> get_clients( void ) const;
 		int	get_listen_fd( void ) const;
 		std::map<std::string, Lounge> get_lounges() const;
+
+	public: //jsamardz - this commands can be found in Commands.cpp
+		void handle_pass(Client &cli, std::istringstream &iss);
+		void handle_nick(Client &cli, std::istringstream &iss);
+		void handle_user(Client &cli, std::istringstream &iss);
+		void handle_join(Client &cli, std::istringstream &iss);
+		void handle_part(Client &cli, std::istringstream &iss);
+		void handle_privmsg(Client &cli, std::istringstream &iss);
+		void handle_names(Client &cli, std::istringstream &iss);
+		void handle_kick(Client &cli, std::istringstream &iss);
+		void handle_invite(Client &cli, std::istringstream &iss);
+		void handle_topic(Client &cli, std::istringstream &iss);
+		void handle_mode(Client &cli, std::istringstream &iss);
 };
