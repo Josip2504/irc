@@ -53,6 +53,10 @@ class Lounge
 		int		get_limit() const;
 		void	set_key(const std::string& key);
 		const std::string& get_key() const;
+
+	public: //jsamardz
+		size_t get_client_count() const { return _clients.size(); }
+		bool is_empty() const { return _clients.empty(); }
 	};
 
 #include "./Client.hpp"

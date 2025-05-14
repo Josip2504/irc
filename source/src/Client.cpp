@@ -36,6 +36,11 @@ void Client::on_read(){
 	std::string tempz(buffer, bytes_read);
 	_input_buffer += tempz;
 
+	if (_input_buffer.find('\n') == std::string::npos && _input_buffer.length() > 512) {
+		_input_buffer.clear();
+		send("ERROR :Line too long\r\n");
+	}
+
 	size_t pos;
 	while((pos = _input_buffer.find("\n")) != std::string::npos) // recreate that it takes \r\n
 	{
