@@ -20,7 +20,11 @@ void Client::send(const std::string &msg)
 {
 	int64_t bytes_send = ::send(_fd, msg.c_str(), msg.length(), 0);
 	if (bytes_send == -1){
-		std::cerr << "send failed !" << std::endl;
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return ;
+		std::cerr << "send()  failed :" << strerror(errno) << std::endl;
+		_state = ClientState::Disconnected;
+		return;
 	}
 }
 
@@ -35,14 +39,15 @@ void Client::on_read(){
 
 	std::string tempz(buffer, bytes_read);
 	_input_buffer += tempz;
+	std::cout << _input_buffer << std::endl;
 
-	if (_input_buffer.find('\n') == std::string::npos && _input_buffer.length() > 512) {
+	if (_input_buffer.find("\r\n") == std::string::npos && _input_buffer.length() > 512) {
 		_input_buffer.clear();
 		send("ERROR :Line too long\r\n");
 	}
 
 	size_t pos;
-	while((pos = _input_buffer.find("\n")) != std::string::npos) // recreate that it takes \r\n
+	while((pos = _input_buffer.find("\r\n")) != std::string::npos) // recreate that it takes \r\n
 	{
 		std::string line = _input_buffer.substr(0, pos);
 		_input_buffer.erase(0, pos + 2);
@@ -77,7 +82,6 @@ std::ostream &operator<<(std::ostream &os, const Client &client)
 {
 	os	<< "[> nickname = " << client.get_nickname() 
 		<< " | ip = " << client.get_ip()
-		<< " | port = " << client.get_port()
 		<< " | fd = " << client.get_fd()
 		<< " | lounge = " << client.get_lounge() 
 		<< " ]";

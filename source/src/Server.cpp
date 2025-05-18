@@ -4,7 +4,7 @@
 #include <csignal>
 #include <sstream>
 
-bool Server::_sig = false;
+bool Server::_sig = true;
 
 /* We add fcntl here mentioned in PDF because it shouldnt block
 *  The Server will check with poll if any FD is ready to be read 
@@ -15,34 +15,36 @@ bool Server::_sig = false;
 //_MAIN_
 Server::Server(int port, const std::string &pass) :  _run(true), _port(port), _passwd(pass)
 {
-	(void)_port;
 	if ((this->_listen_fd = socket(AF_INET, SOCK_STREAM, 0)) == - 1)
-		throw std::runtime_error("Could not create Socket");
+		throw std::runtime_error(std::string("Could not create socket: ") + strerror(errno));
 	
-	int opt = 1; // can be toggled to 0 to turn off this option, if needed can be stored
+	int opt = 1;
 
-	if (setsockopt(_listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1){
+	if (setsockopt(_listen_fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1){
 		close(_listen_fd);
-		throw std::runtime_error("Could not set Socket options");
+		throw std::runtime_error(std::string("Could not set socket options: ") + strerror(errno));
 	}
 
 	//check for best checks to do here dont forget to close fd in case of error
-	fcntl(_listen_fd, F_SETFL, O_NONBLOCK);
+	if (fcntl(_listen_fd, F_SETFL, O_NONBLOCK) == -1){
+		close(_listen_fd);
+		throw std::runtime_error(std::string("Could not set socket to non-blocking: ") + strerror(errno));
+	}
 
-	// needs to be configured one time only the OS remebers the settings
 	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
 	addr.sin_port = htons(port);
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (bind(_listen_fd, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) == -1){
 		close(_listen_fd);
-		throw std::runtime_error("Could not set bind socket to FD");
+		throw std::runtime_error(std::string("Could not bind socket: ") + strerror(errno));
 	}
 
 	if (listen(_listen_fd, SOMAXCONN) == -1){
 		close(_listen_fd);
-		throw std::runtime_error("Couldn't bind the port/FD to listening");
+		throw std::runtime_error(std::string("Could not listen on socket: ") + strerror(errno));
 	}
 	std::cout << "Server listens succesful on fd = " << _listen_fd << std::endl;
 }
@@ -66,7 +68,7 @@ void Server::run()
 //_MEMBER_
 void Server::poll_loop()
 {
-	while(_run == true) 
+	while(_sig == true) 
 	{
 
 		for (auto& pfd : _pfds){
@@ -78,7 +80,7 @@ void Server::poll_loop()
 		if((pollz = poll(_pfds.data(), _pfds.size(), -1)) == -1){
 			if (errno == EINTR)
 				continue;
-			throw std::runtime_error("poll() failed !");
+			throw std::runtime_error(std::string("poll() failed: ") + strerror(errno));
 		}
 
 		for (size_t i = 0; i < _pfds.size(); ++i)
@@ -143,43 +145,6 @@ void Server::create_connection()
 	new_pfd.events = POLLIN;
 	_pfds.push_back(new_pfd);
 }
-
-
-
-			// jsamardz - moved handle_massage down below
-
-
-
-/*void Server::handle_message(Client &cli, std::string &line) // PARSING PART
-{
-	//(void)cli;// Parsing part here, Tokenizing, Function forwarding, Responding . . .
-	//(void)line;
-	//std::cout << cli.get_username() << " -log > [" << line << "]" << std::endl;
-} */
-
-/*void Server::handle_message(int fd) OLD Structure
-{	
-	char buffer[512];
-	int bytes_read = recv(fd, buffer, 511, 0);
-	buffer[bytes_read -1] = '\0'; // we cut out the /n char
-
-	if (bytes_read <= 0){
-		std::cout << "there was a problem to receive msg from fd = " << fd <<  std::endl;
-		close(fd);
-		//need to delete client
-		return ;
-	}
-
-	// Parsing part here, Tokenizing, Function forwarding, Responding . . .
-	// Put all onto Server Class
-
-	//TESTING FOR LOUNGE
-	Client &client = _clients.at(fd);
-	Lounge new_lounge();
-	//broadcast();
-
-	std::cout << _clients.at(fd).get_username() << " -log > [" << buffer << "]" << std::endl;
-}*/
 
 void Server::get_or_make_lounge(std::string &name){
 	auto it = _lounges.find(name);
@@ -285,7 +250,11 @@ void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 		return ;
 	}
 	
-	if (cmd == "PASS") {
+	if (cmd == "CAP") {
+		cli.send("CAP * LS :\r\n");
+		cli.send("CAP * ACK :\r\n");
+	}
+	else if (cmd == "PASS") {
 		handle_pass(cli, iss);
 	} 
 	else if (cmd == "NICK") {
@@ -293,37 +262,58 @@ void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 	} 
 	else if (cmd == "USER") {
 		handle_user(cli, iss);
+		return ;
 	}
-	else if (cmd == "JOIN") {
-		handle_join(cli, iss);
+	else if (cmd == "PING") {
+		std::string token;
+		iss >> token;
+		if (token.empty())
+			cli.send("ERROR :Missing ping token\r\n");
+		else
+			cli.send("PONG " + token + "\r\n");
+		return ;
 	}
-	else if (cmd == "PART") {
-		handle_part(cli, iss);
-	}
-	else if (cmd == "PRIVMSG") {
-		handle_privmsg(cli, iss);
-	}
-	else if (cmd == "NAMES") {
-		handle_names(cli, iss);
-	}
-	else if (cmd == "KICK") {
-		handle_kick(cli, iss);
-	}
-	else if (cmd == "INVITE") {
-		handle_invite(cli, iss);
-	}
-	else if (cmd == "TOPIC") {
-		handle_topic(cli, iss);
-	}
-	else if (cmd == "MODE") {
-		handle_mode(cli, iss);
-	}
-	else {
-		if (!cli.is_registered()) {
-			cli.send("ERROR :Register first (PASS/NICK/USER)\r\n");
+
+	if (cli.is_registered()) {
+		if (cmd == "JOIN") {
+			handle_join(cli, iss);
+		}
+		else if (cmd == "PART") {
+			handle_part(cli, iss);
+		}
+		else if (cmd == "PRIVMSG") {
+			handle_privmsg(cli, iss);
+		}
+		else if (cmd == "NAMES") {
+			handle_names(cli, iss);
+		}
+		else if (cmd == "KICK") {
+			handle_kick(cli, iss);
+		}
+		else if (cmd == "INVITE") {
+			handle_invite(cli, iss);
+		}
+		else if (cmd == "TOPIC") {
+			handle_topic(cli, iss);
+		}
+		else if (cmd == "MODE") {
+			handle_mode(cli, iss);
 		}
 		else {
+			if (cmd == "WHOIS")
+				return ;
 			cli.send("ERROR :Unknown command\r\n");
 		}
+	}
+}
+
+void Server::attempt_register(Client &cli){
+	if (cli.get_state() == ClientState::Authenticated &&
+		!cli.get_nickname().empty() &&
+		!cli.get_username().empty() &&
+		!cli.get_realname().empty())
+	{
+		cli.set_state(ClientState::Registered);
+		cli.send(":server 001 " + cli.get_nickname() + " :Welcome to the IRC server\r\n");
 	}
 }

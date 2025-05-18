@@ -17,7 +17,8 @@ void Server::handle_pass(Client &cli, std::istringstream &iss) {
 	} 
 	else {
 		cli.set_state(ClientState::Authenticated);
-//		cli.send(":server 001 :Password accepted\r\n");
+		//cli.send(":server 001 :Password accepted\r\n");
+		attempt_register(cli);
 	}
 }
 
@@ -43,10 +44,11 @@ void Server::handle_nick(Client &cli, std::istringstream &iss) {
 	cli.send(":server 001 :Nickname set to " + nick + "\r\n");
 
 	// Autoregister if USER was already set
-	if (!cli.get_username().empty() && cli.is_authenticated()) {
-		cli.set_state(ClientState::Registered);
-		cli.send(":server 001 :Registration complete\r\n");
-	}
+//	if (!cli.get_username().empty() && cli.is_authenticated()) {
+//		cli.set_state(ClientState::Registered);
+//		cli.send(":server 001 :Registration complete\r\n");
+//	}
+	attempt_register(cli);
 }
 
 void Server::handle_user(Client &cli, std::istringstream &iss) {
@@ -64,10 +66,11 @@ void Server::handle_user(Client &cli, std::istringstream &iss) {
 	cli.set_realname(realname.substr(1)); // Remove leading ':'
 
 	// Auto-register if NICK was already set
-	if (!cli.get_nickname().empty() && cli.is_authenticated()) {
-		cli.set_state(ClientState::Registered);
-		cli.send(":server 001 :Registration complete. Welcome!\r\n");
-	}
+//	if (!cli.get_nickname().empty() && cli.is_authenticated()) {
+//		cli.set_state(ClientState::Registered);
+//		cli.send(":server 001 :Registration complete. Welcome!\r\n");
+//	}
+	attempt_register(cli);
 }
 
 void Server::handle_join(Client &cli, std::istringstream &iss) {

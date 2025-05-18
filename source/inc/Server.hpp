@@ -36,6 +36,8 @@ class Server
 		void shutdown();
 		void init_signals();
 		static void stop_run(const int signum);
+		void attempt_register(Client &cli);
+
 
 	public: //UTILITY
 		std::map<int, Client> get_clients( void ) const;
