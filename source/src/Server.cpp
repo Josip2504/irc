@@ -55,9 +55,10 @@ Server::~Server()
 void Server::run()
 {	
 	pollfd pfd;
+	memset(&pfd, 0, sizeof(pfd));
 	pfd.fd = _listen_fd;
 	pfd.events = POLLIN;
-	_pfds.push_back(pfd); //maybe add main pfd checks
+	_pfds.push_back(pfd);
 
 	poll_loop();
 }
@@ -67,10 +68,18 @@ void Server::poll_loop()
 {
 	while(_run == true) 
 	{
+
+		for (auto& pfd : _pfds){
+			pfd.revents = 0;
+		}
+
 		int pollz;
 
-		if((pollz = poll(_pfds.data(), _pfds.size(), -1)) == -1)
-			return;
+		if((pollz = poll(_pfds.data(), _pfds.size(), -1)) == -1){
+			if (errno == EINTR)
+				continue;
+			throw std::runtime_error("poll() failed !");
+		}
 
 		for (size_t i = 0; i < _pfds.size(); ++i)
 		{
@@ -95,6 +104,7 @@ void Server::poll_loop()
 						handle_message(cli, line);
 						if (cli.is_disconnected()){
 							remove_client(pfd.fd);
+							i--;
 							break;
 						}
 					}
@@ -111,8 +121,12 @@ void Server::create_connection()
 	
 	int new_fd = accept(_listen_fd, (sockaddr *)&new_client, &client_len);
 	if (new_fd == -1){
-		std::cerr << "failed to get client new_fd" << std::endl;
-		return ;
+		if (errno == EWOULDBLOCK || errno == EAGAIN)
+			return ;
+		else {
+			std::cerr << "accept() error: " << strerror(errno) << std::endl;
+			return ;
+		}
 	}
 
 	fcntl(new_fd, F_SETFL, O_NONBLOCK);
@@ -124,11 +138,10 @@ void Server::create_connection()
 	std::cout << _clients.at(new_fd) << std::endl;
 
 	pollfd new_pfd;
+	memset(&new_pfd, 0, sizeof(new_pfd));
 	new_pfd.fd = new_fd;
 	new_pfd.events = POLLIN;
 	_pfds.push_back(new_pfd);
-	
-	std::cout << "WE HAVE A NEW CONNECTION" << std::endl;//LOG::
 }
 
 
@@ -185,12 +198,13 @@ void Server::remove_client(int fd)
 	if (it == _clients.end())
 		return ;
 
-	if (it->second.get_lounge() != nullptr)
-		it->second.get_lounge()->remove_client(&it->second);
+	Lounge * lounge = it->second.get_lounge();
+	if (lounge != nullptr){
+		lounge->remove_client(&it->second);
+		if (lounge->is_empty())
+		_lounges.erase(lounge->get_name());
+	}
 	
-	_clients.erase(it);
-
-	close(fd);
 	for (auto it = _pfds.begin(); it != _pfds.end(); ++it) {
 		if (it->fd == fd) {
 			_pfds.erase(it);
@@ -198,12 +212,15 @@ void Server::remove_client(int fd)
 		}
 	}
 	
+	close(fd);
+	_clients.erase(it);
+
 	std::cout << "Client " << fd << " disconnected.";
 }
 
 void Server::shutdown()
 {
-	std::cout << "Server is shutting down." << std::endl;
+	std::cout << "shutting down. . ." << std::endl;
 	
 	std::vector<int> open_fds;
 	open_fds.reserve(_clients.size());
@@ -224,11 +241,14 @@ void Server::shutdown()
 	_pfds.clear();
 	_clients.clear();
 
-	std::cout << "Cleanup done, farewell traveler." << std::endl;
+	std::cout << "Cleanup done." << std::endl;
 }
 
 void Server::init_signals()
 {
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = Server::stop_run;
 	signal(SIGINT, Server::stop_run);
 	signal(SIGQUIT, Server::stop_run);
 }
@@ -260,6 +280,11 @@ void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 	std::string cmd;
 	iss >> cmd;
 
+	if (cmd.size() > 100) {
+		cli.send("ERROR :Command too long\r\n");
+		return ;
+	}
+	
 	if (cmd == "PASS") {
 		handle_pass(cli, iss);
 	} 

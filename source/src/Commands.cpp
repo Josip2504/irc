@@ -9,16 +9,15 @@ void Server::handle_pass(Client &cli, std::istringstream &iss) {
 	iss >> password;
 
 	if (password.empty()) {
-		cli.send("ERROR :Password required\r\n");
+        cli.send(":server 461 * PASS :Not enough parameters\r\n");
 	} 
 	else if (password != _passwd) {
-		cli.send("ERROR :Invalid password\r\n");
+        cli.send(":server 464 * :Password incorrect\r\n");
 		cli.set_state(ClientState::Disconnected);
-		//remove_client(cli.get_fd());
 	} 
 	else {
 		cli.set_state(ClientState::Authenticated);
-		cli.send(":server 001 :Password accepted\r\n");
+//		cli.send(":server 001 :Password accepted\r\n");
 	}
 }
 
@@ -27,14 +26,15 @@ void Server::handle_nick(Client &cli, std::istringstream &iss) {
 	iss >> nick;
 
 	if (nick.empty()) {
-		cli.send("ERROR :No nickname given\r\n");
+		cli.send(":server 431 * :No nickname given\r\n");
 		return;
 	}
 
 	// Check if nickname is already in use
 	for (auto &[fd, client] : _clients) {
 		if (client.get_nickname() == nick) {
-			cli.send("ERROR :Nickname already in use\r\n");
+			std::string reply = ":server 433 * "+ nick + " :Nickname is already in use\r\n";
+			cli.send(reply);
 			return;
 		}
 	}
