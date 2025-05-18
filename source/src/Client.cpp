@@ -39,7 +39,6 @@ void Client::on_read(){
 
 	std::string tempz(buffer, bytes_read);
 	_input_buffer += tempz;
-	std::cout << _input_buffer << std::endl;//TODO:
 
 	if (_input_buffer.find("\r\n") == std::string::npos && _input_buffer.length() > 512) {
 		_input_buffer.clear();
@@ -47,7 +46,7 @@ void Client::on_read(){
 	}
 
 	size_t pos;
-	while((pos = _input_buffer.find("\r\n")) != std::string::npos) // recreate that it takes \r\n
+	while((pos = _input_buffer.find("\r\n")) != std::string::npos)
 	{
 		std::string line = _input_buffer.substr(0, pos);
 		_input_buffer.erase(0, pos + 2);

@@ -25,7 +25,6 @@ Server::Server(int port, const std::string &pass) :  _run(true), _port(port), _p
 		throw std::runtime_error(std::string("Could not set socket options: ") + strerror(errno));
 	}
 
-	//check for best checks to do here dont forget to close fd in case of error
 	if (fcntl(_listen_fd, F_SETFL, O_NONBLOCK) == -1){
 		close(_listen_fd);
 		throw std::runtime_error(std::string("Could not set socket to non-blocking: ") + strerror(errno));
