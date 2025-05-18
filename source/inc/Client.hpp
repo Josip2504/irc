@@ -30,6 +30,7 @@ class Client
 
 		std::string _input_buffer;
 		std::queue<std::string>_message_list;
+		bool _inv;
 
 	public://MAIN
 		Client(int fd, int port, std::string ip);
@@ -72,6 +73,8 @@ class Client
 		void set_hostname(std::string host) { _hostname = host; }
 		void set_realname(std::string real) { _realname = real; }
 		void set_lounge(Lounge *lounge) { _lounge = lounge; }
+		void set_inv(bool state) { _inv = state; }
+		bool is_inv() const { return _inv; }
 };
 
 std::ostream &operator<<(std::ostream &os, const Client &client);

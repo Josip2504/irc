@@ -256,9 +256,11 @@ void Server::handle_message(Client &cli, std::string &line) // PARSING PART
 	}
 	else if (cmd == "PASS") {
 		handle_pass(cli, iss);
+		return ;
 	} 
 	else if (cmd == "NICK") {
 		handle_nick(cli, iss);
+		return ;
 	} 
 	else if (cmd == "USER") {
 		handle_user(cli, iss);

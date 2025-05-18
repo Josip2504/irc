@@ -39,7 +39,7 @@ void Client::on_read(){
 
 	std::string tempz(buffer, bytes_read);
 	_input_buffer += tempz;
-	std::cout << _input_buffer << std::endl;
+	std::cout << _input_buffer << std::endl;//TODO:
 
 	if (_input_buffer.find("\r\n") == std::string::npos && _input_buffer.length() > 512) {
 		_input_buffer.clear();

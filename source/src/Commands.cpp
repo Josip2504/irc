@@ -326,9 +326,32 @@ void Server::handle_mode(Client &cli, std::istringstream &iss) {
 	std::string target, mode, arg;
 	iss >> target >> mode >> arg;
 
-	if (target.empty() || target[0] != '#') {
-		cli.send("ERROR :Invalid target\r\n");
+	if (target.empty()) {
+		cli.send("ERROR :No target\r\n");
 		return;
+	}
+
+	if (target[0] != '#') {
+        // Handle user modes
+		if (target[0 == "Nickname"])
+			return ;
+        if (target != cli.get_nickname()) {
+            cli.send("ERROR :Can only change your own modes\r\n");
+            return;
+        }
+
+        if (mode == "+i") {
+            cli.set_inv(true);
+            cli.send(":" + cli.get_nickname() + " MODE " + target + " +i\r\n");
+        }
+        else if (mode == "-i") {
+            cli.set_inv(false);
+            cli.send(":" + cli.get_nickname() + " MODE " + target + " -i\r\n");
+        }
+        else {
+            cli.send("ERROR :Unknown user mode\r\n");
+        }
+        return;  // Important: Return after handling user mode
 	}
 
 	std::string lounge_name = target.substr(1);
